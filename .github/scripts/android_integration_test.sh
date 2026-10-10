@@ -13,7 +13,7 @@ status=1
 for attempt in 1 2; do
   echo "::group::Attempt $attempt"
   adb logcat -c || true
-  timeout 900 flutter test integration_test
+  timeout 600 flutter test integration_test
   status=$?
   echo "::endgroup::"
 
@@ -26,7 +26,7 @@ for attempt in 1 2; do
   if [ "$status" -ne 124 ]; then
     break
   fi
-  echo "::warning::flutter test produced no result within 15 minutes (attempt $attempt)."
+  echo "::warning::flutter test produced no result within 10 minutes (attempt $attempt)."
 done
 
 exit "$status"

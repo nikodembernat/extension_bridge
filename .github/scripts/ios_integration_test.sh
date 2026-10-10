@@ -23,7 +23,7 @@ for attempt in 1 2; do
   log_pid=$!
 
   echo "::group::Attempt $attempt"
-  with_deadline 900 flutter test integration_test -d "$udid"
+  with_deadline 600 flutter test integration_test -d "$udid"
   status=$?
   echo "::endgroup::"
 
@@ -35,7 +35,7 @@ for attempt in 1 2; do
   if [ "$status" -ne 142 ]; then
     break
   fi
-  echo "::warning::flutter test produced no result within 15 minutes (attempt $attempt)."
+  echo "::warning::flutter test produced no result within 10 minutes (attempt $attempt)."
 done
 
 exit "$status"

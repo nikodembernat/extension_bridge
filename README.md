@@ -259,10 +259,14 @@ details.
    to every extension target.
 2. To use the Swift helpers from an extension (widget, Live Activity, share
    extension, …), add the plugin's Swift package to that target and link
-   **only** the `ExtensionBridgeKit` product – it has no Flutter dependency:
-   *File ▸ Add Package Dependencies… ▸ Add Local…* and select
-   `ios/Flutter/ephemeral/Packages/.packages/extension_bridge` (created by
-   `flutter build ios`).
+   **only** the `ExtensionBridgeKit` product – it has no Flutter dependency.
+   After `flutter build ios` the package is symlinked to
+   `ios/Flutter/ephemeral/Packages/.packages/extension_bridge-<version>`
+   (*File ▸ Add Package Dependencies… ▸ Add Local…*). Prefer not to? The
+   helpers are thin; extensions can use the conventions directly:
+   values live in `UserDefaults(suiteName: appGroup)` under the keys used in
+   Dart, files in the `extension_bridge` directory of the App Group
+   container, and links need the `extension_bridge` query parameter.
 3. Register your features in `AppDelegate`:
 
 ```swift

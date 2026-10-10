@@ -1,8 +1,8 @@
 name: extension_bridge
 description: >-
-  One bridge between Flutter and native app extensions: shared storage, shared
-  files, deep links, background Dart callbacks and custom native features for
-  home screen widgets, Live Activities, share extensions and App Intents.
+  Share storage, files, deep links, background Dart callbacks and custom native
+  code between Flutter and app extensions: widgets, Live Activities, share
+  extensions, App Intents.
 version: 0.1.0
 repository: https://github.com/nikodembernat/extension_bridge
 issue_tracker: https://github.com/nikodembernat/extension_bridge/issues
