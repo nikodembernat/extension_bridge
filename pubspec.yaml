@@ -1,0 +1,58 @@
+name: extension_bridge
+description: >-
+  One bridge between Flutter and native app extensions: shared storage, shared
+  files, deep links, background Dart callbacks and custom native features for
+  home screen widgets, Live Activities, share extensions and App Intents.
+version: 0.1.0
+repository: https://github.com/nikodembernat/extension_bridge
+issue_tracker: https://github.com/nikodembernat/extension_bridge/issues
+topics:
+  - widget
+  - live-activities
+  - app-extension
+  - app-intents
+  - interop
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+workspace:
+  - example
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  meta: ^1.17.0
+  path_provider: ^2.1.6
+  plugin_platform_interface: ^2.1.8
+  web: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  leancode_lint: ^27.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.nikodembernat.extension_bridge
+        pluginClass: ExtensionBridgePlugin
+      ios:
+        pluginClass: ExtensionBridgePlugin
+        sharedDarwinSource: true
+      macos:
+        pluginClass: ExtensionBridgePlugin
+        sharedDarwinSource: true
+      linux:
+        dartPluginClass: ExtensionBridgeDesktop
+        dartFileName: src/platform/desktop_extension_bridge.dart
+      windows:
+        dartPluginClass: ExtensionBridgeDesktop
+        dartFileName: src/platform/desktop_extension_bridge.dart
+      web:
+        pluginClass: ExtensionBridgeWeb
+        fileName: src/platform/web_extension_bridge.dart

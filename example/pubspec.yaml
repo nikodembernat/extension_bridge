@@ -1,0 +1,24 @@
+name: extension_bridge_example
+description: Demonstrates and integration tests the extension_bridge plugin.
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+dependencies:
+  extension_bridge:
+    path: ../
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  leancode_lint: ^27.0.0
+
+flutter:
+  uses-material-design: true
