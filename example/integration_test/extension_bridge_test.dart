@@ -27,6 +27,19 @@ const otherGroup = ExtensionBridge(
 );
 final example = bridge.feature('example');
 
+/// Declares a test that logs when it starts and fails instead of hanging, so
+/// CI logs always show which test misbehaved.
+void bridgeTest(
+  String description,
+  Future<void> Function() body, {
+  bool skip = false,
+}) {
+  testWidgets(description, skip: skip, (_) async {
+    debugPrint('▶ $description');
+    await body().timeout(const Duration(seconds: 60));
+  });
+}
+
 Matcher throwsBridgeException(String code) => throwsA(
   isA<ExtensionBridgeException>().having((it) => it.code, 'code', code),
 );
@@ -40,7 +53,7 @@ void main() {
   });
 
   group('storage', () {
-    testWidgets('round trips every supported type', (_) async {
+    bridgeTest('round trips every supported type', () async {
       final bytes = Uint8List.fromList([0, 1, 2, 254, 255]);
       await bridge.storage.set('string', 'Hello, extensions! 👋');
       await bridge.storage.set('int', 42);
@@ -72,7 +85,7 @@ void main() {
       });
     });
 
-    testWidgets('overwrites, removes and clears values', (_) async {
+    bridgeTest('overwrites, removes and clears values', () async {
       await bridge.storage.set('key', 'first');
       await bridge.storage.set('key', 2);
       expect(await bridge.storage.get<int>('key'), 2);
@@ -89,7 +102,7 @@ void main() {
       expect(await bridge.storage.getAll(), isEmpty);
     });
 
-    testWidgets('stores JSON', (_) async {
+    bridgeTest('stores JSON', () async {
       final json = {
         'title': 'Groceries',
         'items': ['milk', 'eggs'],
@@ -100,7 +113,7 @@ void main() {
       expect(await bridge.storage.getJson('list'), json);
     });
 
-    testWidgets('rejects values of another type', (_) async {
+    bridgeTest('rejects values of another type', () async {
       await bridge.storage.set('key', 'text');
       await expectLater(
         bridge.storage.get<int>('key'),
@@ -108,7 +121,7 @@ void main() {
       );
     });
 
-    testWidgets('keeps app groups apart', (_) async {
+    bridgeTest('keeps app groups apart', () async {
       await bridge.storage.set('key', 'default');
       await otherGroup.storage.set('key', 'other');
 
@@ -119,7 +132,7 @@ void main() {
       expect(await bridge.storage.get<String>('key'), 'default');
     });
 
-    testWidgets('native code reads values written in Dart', (_) async {
+    bridgeTest('native code reads values written in Dart', () async {
       await bridge.storage.set('string', 'from Dart');
       await bridge.storage.set('int', 7);
       await bridge.storage.set('double', 2.5);
@@ -136,7 +149,7 @@ void main() {
       expect(await read('bytes'), Uint8List.fromList([4, 5, 6]));
     }, skip: !isNative);
 
-    testWidgets('Dart reads values written by native code', (_) async {
+    bridgeTest('Dart reads values written by native code', () async {
       await example.invoke<void>('writeStorage');
 
       expect(await bridge.storage.get<String>('native.string'), 'native');
@@ -157,7 +170,7 @@ void main() {
       }
     });
 
-    testWidgets('writes, reads, lists and deletes files', (_) async {
+    bridgeTest('writes, reads, lists and deletes files', () async {
       final bytes = Uint8List.fromList(List.generate(1024, (it) => it % 256));
 
       final path = await bridge.files.write('images/avatar.png', bytes);
@@ -179,7 +192,7 @@ void main() {
       expect(await bridge.files.list(), isEmpty);
     }, skip: kIsWeb);
 
-    testWidgets('native code reads files written in Dart', (_) async {
+    bridgeTest('native code reads files written in Dart', () async {
       await bridge.files.write('shared.bin', Uint8List.fromList([9, 8, 7]));
       expect(
         await example.invoke<Uint8List>('readFile', {'name': 'shared.bin'}),
@@ -187,7 +200,7 @@ void main() {
       );
     }, skip: !isNative);
 
-    testWidgets('are not available on the web', (_) async {
+    bridgeTest('are not available on the web', () async {
       await expectLater(
         bridge.files.directory,
         throwsBridgeException(ExtensionBridgeException.unsupported),
@@ -196,7 +209,7 @@ void main() {
   });
 
   group('features', () {
-    testWidgets('invokes native methods', (_) async {
+    bridgeTest('invokes native methods', () async {
       expect(await example.invoke<String>('platform'), isNotEmpty);
 
       final arguments = {
@@ -217,7 +230,7 @@ void main() {
       expect(await example.invokeList<int>('echo', [1, 2, 3]), [1, 2, 3]);
     }, skip: !isNative);
 
-    testWidgets('reports native errors', (_) async {
+    bridgeTest('reports native errors', () async {
       await expectLater(
         example.invoke<void>('fail'),
         throwsA(
@@ -241,7 +254,7 @@ void main() {
       );
     }, skip: !isNative);
 
-    testWidgets('streams native events', (_) async {
+    bridgeTest('streams native events', () async {
       expect(await example.events<int>('ticks', {'count': 3}).toList(), [
         0,
         1,
@@ -257,7 +270,7 @@ void main() {
       );
     }, skip: !isNative);
 
-    testWidgets('are not available on Linux, Windows and the web', (_) async {
+    bridgeTest('are not available on Linux, Windows and the web', () async {
       await expectLater(
         example.invoke<void>('platform'),
         throwsBridgeException(ExtensionBridgeException.unsupported),
@@ -270,27 +283,29 @@ void main() {
   });
 
   group('background', () {
-    testWidgets('runs the registered callback in a background isolate', (
-      _,
-    ) async {
-      expect(await ExtensionBridge.isBackgroundExecutionSupported, isTrue);
-      await ExtensionBridge.registerBackgroundCallback(app.onBackgroundEvent);
+    bridgeTest(
+      'runs the registered callback in a background isolate',
+      () async {
+        expect(await ExtensionBridge.isBackgroundExecutionSupported, isTrue);
+        await ExtensionBridge.registerBackgroundCallback(app.onBackgroundEvent);
 
-      expect(
-        await example.invoke<Object?>('dispatchBackground', {
-          'name': 'echo',
-          'arguments': {'hello': 'background'},
-        }),
-        {'hello': 'background'},
-      );
+        expect(
+          await example.invoke<Object?>('dispatchBackground', {
+            'name': 'echo',
+            'arguments': {'hello': 'background'},
+          }),
+          {'hello': 'background'},
+        );
 
-      await expectLater(
-        example.invoke<Object?>('dispatchBackground', {'name': 'unknown'}),
-        throwsA(isA<ExtensionBridgeException>()),
-      );
-    }, skip: !supportsBackground);
+        await expectLater(
+          example.invoke<Object?>('dispatchBackground', {'name': 'unknown'}),
+          throwsA(isA<ExtensionBridgeException>()),
+        );
+      },
+      skip: !supportsBackground,
+    );
 
-    testWidgets('is reported as unavailable elsewhere', (_) async {
+    bridgeTest('is reported as unavailable elsewhere', () async {
       expect(await ExtensionBridge.isBackgroundExecutionSupported, isFalse);
       await expectLater(
         ExtensionBridge.registerBackgroundCallback(app.onBackgroundEvent),
@@ -300,7 +315,7 @@ void main() {
   });
 
   group('links', () {
-    testWidgets('delivers extension links opened natively', (_) async {
+    bridgeTest('delivers extension links opened natively', () async {
       final links = <ExtensionLink>[];
       final subscription = ExtensionBridge.links.listen(links.add);
       addTearDown(subscription.cancel);
@@ -324,7 +339,7 @@ void main() {
       ]);
     }, skip: !isNative);
 
-    testWidgets('has no initial link when launched normally', (_) async {
+    bridgeTest('has no initial link when launched normally', () async {
       expect(await ExtensionBridge.initialLink, isNull);
     });
   });

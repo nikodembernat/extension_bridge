@@ -109,8 +109,7 @@ jobs:
           xcrun simctl bootstatus "$UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
       - name: Integration tests
-        working-directory: example
-        run: flutter test integration_test -d ${{ steps.simulator.outputs.udid }} --timeout 120s
+        run: .github/scripts/ios_integration_test.sh ${{ steps.simulator.outputs.udid }}
 
   macos:
     name: macOS
